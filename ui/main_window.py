@@ -14,7 +14,7 @@ from core.models import MapProject, TileSet, LayerType
 from core.constants import (APP_NAME, APP_VERSION, DEFAULT_GRID_WIDTH,
                             DEFAULT_GRID_HEIGHT, DEFAULT_TILE_SIZE)
 from editor.editor_state import EditorState
-from io.project_io import ProjectIO
+from data_io.project_io import ProjectIO
 
 
 class TileEditorMainWindow(QMainWindow):
