@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
-from io.binary import BinaryLayerIO
-from io.metadata import MetadataIO
-from io.hdf5_exporter import HDF5Exporter
+from .binary import BinaryLayerIO
+from .metadata import MetadataIO
+from .hdf5_exporter import HDF5Exporter
 
 class ProjectIO:
     # \"\"\"Manage complete project save/load\"\"\"
