@@ -52,15 +52,21 @@ class PygameCanvasWidget(QWidget):
         self.pygame_surface.fill((50, 50, 50))
     
     def paintEvent(self, event):
-        # \"\"\"Qt paint event - convert Pygame surface to Qt\"\"\"
-        # Convert pygame surface to QImage
-        w, h = self.pygame_surface.get_size()
-        data = pygame.image.tostring(self.pygame_surface, 'RGB')
-        qimage = QImage(data, w, h, w * 3, QImage.Format_RGB888)
-        
-        # Draw to widget
-        painter = QPainter(self)
-        painter.drawImage(0, 0, qimage)
+        if self.pygame_surface:
+            w, h = self.pygame_surface.get_size()
+            print(f"DEBUG: Widget size: {self.width()}x{self.height()}, Surface size: {w}x{h}")
+
+            data = pygame.image.tostring(self.pygame_surface, 'RGB')
+            qimage = QImage(data, w, h, w * 3, QImage.Format_RGB888)
+            
+            # Draw to widget
+            painter = QPainter(self)
+            painter.drawImage(0, 0, qimage)
+            # rest of code
+        else:
+            print("DEBUG: paintEvent called but pygame_surface is None")
+
+
     
     def mousePressEvent(self, event):
         # \"\"\"Handle mouse press\"\"\"

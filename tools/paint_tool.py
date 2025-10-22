@@ -23,14 +23,31 @@ class PaintTool(BaseTool):
         self.last_painted = None
     
     def _paint_tile(self, grid_x: int, grid_y: int):
-        # \"\"\"Paint selected tile at position\"\"\"
+        """Paint selected tile at position"""
         layer = self.editor_state.current_layer
         tile_id = self.editor_state.selected_tile_id
         
+        # ADD THESE DEBUG LINES:
+        print(f"\n=== PAINT TOOL DEBUG ===")
+        print(f"Grid position: ({grid_x}, {grid_y})")
+        print(f"Layer: {layer}")
+        print(f"Tile ID: {tile_id}")
+        
         if layer and not layer.locked and tile_id is not None:
             if 0 <= grid_x < layer.width and 0 <= grid_y < layer.height:
+                print(f"✓ PAINTING tile {tile_id} at ({grid_x}, {grid_y})")
                 layer.set_tile(grid_x, grid_y, tile_id)
                 self.last_painted = (grid_x, grid_y)
+            else:
+                print(f"✗ OUT OF BOUNDS: ({grid_x}, {grid_y}) not in 0-{layer.width}, 0-{layer.height}")
+        else:
+            print(f"✗ CANNOT PAINT:")
+            print(f"  Layer exists: {layer is not None}")
+
+            if layer:
+                print(f"  Layer locked: {layer.locked}")
+            print(f"  Tile selected: {tile_id is not None}")
+        print("=======================\n")
     
     def get_cursor_name(self) -> str:
         return "paint"

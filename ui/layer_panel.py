@@ -1,12 +1,12 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, 
                                QListWidget, QListWidgetItem, QPushButton,
-                               QLabel, QCheckBox, QSlider, QComboBox,
-                               QInputDialog, QMessageBox)
+                               QLabel, QCheckBox, QSlider, QMessageBox)
 from PySide6.QtCore import Signal, Qt
 from core.models import LayerType
 
+
 class LayerPanelWidget(QWidget):
-    # """Panel for managing layers"""
+    """Panel for managing layers - FIXED VERSION"""
     
     layer_selected = Signal(object)  # layer
     layer_visibility_changed = Signal(object, bool)  # layer, visible
@@ -16,12 +16,13 @@ class LayerPanelWidget(QWidget):
         super().__init__(parent)
         self.project = project
         self.current_layer = None
+        self._updating_ui = False  # Flag to prevent recursive updates
         
         self._setup_ui()
         self._populate_layers()
     
     def _setup_ui(self):
-        # """Setup UI"""
+        """Setup UI"""
         layout = QVBoxLayout(self)
         
         # Layer list
@@ -73,12 +74,14 @@ class LayerPanelWidget(QWidget):
         self.slider_opacity.setValue(100)
         self.slider_opacity.valueChanged.connect(self._on_opacity_changed)
         opacity_layout.addWidget(self.slider_opacity)
+        self.lbl_opacity = QLabel("100%")
+        opacity_layout.addWidget(self.lbl_opacity)
         props_layout.addLayout(opacity_layout)
         
         layout.addLayout(props_layout)
     
     def _populate_layers(self):
-        # """Populate layer list"""
+        """Populate layer list"""
         self.layer_list.clear()
         
         # Sort by z_index (highest first for visual order)
@@ -94,36 +97,48 @@ class LayerPanelWidget(QWidget):
             self.layer_list.addItem(item)
     
     def _on_layer_clicked(self, item):
-        # """Handle layer selection"""
+        """Handle layer selection"""
         layer = item.data(Qt.UserRole)
         self.current_layer = layer
+        
+        # Block signals to prevent recursive updates
+        self._updating_ui = True
         
         # Update properties UI
         self.chk_visible.setChecked(layer.visible)
         self.chk_locked.setChecked(layer.locked)
         self.chk_interacts.setChecked(layer.interacts_with_layers)
         self.slider_opacity.setValue(int(layer.opacity * 100))
+        self.lbl_opacity.setText(f"{int(layer.opacity * 100)}%")
+        
+        self._updating_ui = False
         
         # Emit signal
         self.layer_selected.emit(layer)
     
     def _on_add_layer(self):
-        # """Add new layer"""
-        # Show dialog for layer name and type
-        name, ok = QInputDialog.getText(self, "Add Layer", "Layer name:")
-        if not ok or not name:
-            return
+        """Add new layer - with dialog"""
+        from ui.main_window import AddLayerDialog
         
-        # Create layer
-        layer = self.project.add_layer(name, LayerType.ACTUAL)
-        
-        # Refresh list
-        self._populate_layers()
-        self.layers_changed.emit()
+        dialog = AddLayerDialog(self)
+        if dialog.exec():
+            name, layer_type = dialog.get_layer_data()
+            
+            if not name:
+                QMessageBox.warning(self, "Warning", "Layer name cannot be empty!")
+                return
+            
+            # Create layer
+            layer = self.project.add_layer(name, layer_type)
+            
+            # Refresh list
+            self._populate_layers()
+            self.layers_changed.emit()
     
     def _on_delete_layer(self):
-        # """Delete selected layer"""
+        """Delete selected layer"""
         if not self.current_layer:
+            QMessageBox.warning(self, "Warning", "No layer selected!")
             return
         
         # Confirm deletion
@@ -141,28 +156,37 @@ class LayerPanelWidget(QWidget):
             self.layers_changed.emit()
     
     def _on_visibility_changed(self, state):
-        # """Handle visibility change"""
-        if self.current_layer:
-            self.current_layer.visible = (state == Qt.Checked)
-            self._populate_layers()
-            self.layer_visibility_changed.emit(self.current_layer, self.current_layer.visible)
+        """Handle visibility change - FIXED"""
+        if self._updating_ui or not self.current_layer:
+            return
+        
+        self.current_layer.visible = (state == Qt.Checked)
+        self._populate_layers()
+        self.layer_visibility_changed.emit(self.current_layer, self.current_layer.visible)
     
     def _on_locked_changed(self, state):
-        # """Handle locked change"""
-        if self.current_layer:
-            self.current_layer.locked = (state == Qt.Checked)
-            self._populate_layers()
+        """Handle locked change - FIXED"""
+        if self._updating_ui or not self.current_layer:
+            return
+        
+        self.current_layer.locked = (state == Qt.Checked)
+        self._populate_layers()
     
     def _on_interacts_changed(self, state):
-        # """Handle interacts change"""
-        if self.current_layer:
-            self.current_layer.interacts_with_layers = (state == Qt.Checked)
+        """Handle interacts change - FIXED"""
+        if self._updating_ui or not self.current_layer:
+            return
+        
+        self.current_layer.interacts_with_layers = (state == Qt.Checked)
     
     def _on_opacity_changed(self, value):
-        # """Handle opacity change"""
-        if self.current_layer:
-            self.current_layer.opacity = value / 100.0
+        """Handle opacity change - FIXED"""
+        if self._updating_ui or not self.current_layer:
+            return
+        
+        self.current_layer.opacity = value / 100.0
+        self.lbl_opacity.setText(f"{value}%")
     
     def refresh(self):
-        # """Refresh layer list"""
+        """Refresh layer list"""
         self._populate_layers()
